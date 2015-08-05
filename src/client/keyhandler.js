@@ -21,6 +21,14 @@ KeyHandler.prototype.keyup = function(e) {
   this.keys[e.keyCode] = false;
 };
 
+KeyHandler.prototype.reset = function() {
+  for (var k in this.keys) {
+    if (this.keys.hasOwnProperty(k)) {
+      this.keys[k] = false;
+    }
+  }
+};
+
 KeyHandler.prototype.isKeyPressed = function(key) {
   if (typeof 'key' == 'string') {
     return this.keys[key.toUpperCase().charCodeAt(0)];
@@ -29,11 +37,11 @@ KeyHandler.prototype.isKeyPressed = function(key) {
   }
 };
 
-KeyHandler.prototype.tick = function() {
+KeyHandler.prototype.tick = function(delta) {
   for (var k in this.handlers) {
     if (this.handlers.hasOwnProperty(k)) {
       if (this.isKeyPressed(k)) {
-        this.handlers[k]();
+        this.handlers[k](delta);
       }
     }
   }

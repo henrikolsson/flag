@@ -1,7 +1,7 @@
 var vec3 = require('gl-matrix').vec3;
 var mat4 = require('gl-matrix').mat4;
 
-var movespeed = vec3.fromValues(0.03, 0.03, 0.03);
+var movespeed = vec3.fromValues(0.003, 0.003, 0.003);
 var mousespeed = 0.003;
 
 var Camera = function () {
@@ -16,52 +16,48 @@ var Camera = function () {
   this.updateVectors();
 };
 
-Camera.prototype.goLeft = function() {
+Camera.prototype.goLeft = function(distance) {
   var dir = vec3.fromValues(0,0,0);
-  var tmp = vec3.fromValues(0,0,0);
   vec3.negate(dir, this.right);
   vec3.multiply(dir, dir, movespeed);
-  vec3.add(tmp, this.position, dir);
+  vec3.multiply(dir, dir, vec3.fromValues(distance, distance, distance));
   vec3.add(this.position, this.position, dir);
 };
 
-Camera.prototype.goRight = function() {
+Camera.prototype.goRight = function(distance) {
   var dir = vec3.fromValues(0,0,0);
-  var tmp = vec3.fromValues(0,0,0);
   vec3.multiply(dir, this.right, movespeed);
-  vec3.add(tmp, this.position, dir);
+  vec3.multiply(dir, dir, vec3.fromValues(distance, distance, distance));
   vec3.add(this.position, this.position, dir);
 };
 
-Camera.prototype.goUp = function() {
+Camera.prototype.goUp = function(distance) {
   var dir = vec3.fromValues(0,0,0);
-  var tmp = vec3.fromValues(0,0,0);
   dir = vec3.fromValues(0, movespeed[0], 0);
+  vec3.multiply(dir, dir, vec3.fromValues(distance, distance, distance));
   vec3.add(this.position, this.position, dir);
 };
 
-Camera.prototype.goDown = function() {
+Camera.prototype.goDown = function(distance) {
   var dir = vec3.fromValues(0,0,0);
-  var tmp = vec3.fromValues(0,0,0);
   dir = vec3.fromValues(0, movespeed[0], 0);
   vec3.negate(dir, dir);
+  vec3.multiply(dir, dir, vec3.fromValues(distance, distance, distance));
   vec3.add(this.position, this.position, dir);
 };
 
-Camera.prototype.goForward = function() {
+Camera.prototype.goForward = function(distance) {
   var dir = vec3.fromValues(0,0,0);
-  var tmp = vec3.fromValues(0,0,0);
   vec3.multiply(dir, this.forward, movespeed);
-  vec3.add(tmp, this.position, dir);
+  vec3.multiply(dir, dir, vec3.fromValues(distance, distance, distance));
   vec3.add(this.position, this.position, dir);
 };
 
-Camera.prototype.goBack = function() {
+Camera.prototype.goBack = function(distance) {
   var dir = vec3.fromValues(0,0,0);
-  var tmp = vec3.fromValues(0,0,0);
   vec3.negate(dir, this.forward);
   vec3.multiply(dir, dir, movespeed);
-  vec3.add(tmp, this.position, dir);
+  vec3.multiply(dir, dir, vec3.fromValues(distance, distance, distance));
   vec3.add(this.position, this.position, dir);
 };
 

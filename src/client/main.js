@@ -82,6 +82,7 @@ var game = {
         document.mozPointerLockElement === game.canvas ||
         document.webkitPointerLockElement === game.canvas) {
       game.running = true;
+      game.keyHandler.reset();
       document.addEventListener("mousemove", game.mouseMoveCallback, false);
     }
     else {
@@ -127,6 +128,13 @@ var game = {
       game.previous = now;
       game.frames = 0;
     }
+    
+    if (!game.previousFrame) {
+      game.previousFrame = now;
+    }
+    var delta = now - game.previousFrame;
+    game.previousFrame = now;
+    
     game.positionNode.nodeValue = utils.vec2str(game.camera.position);
     game.lookAtNode.nodeValue = utils.vec2str(game.camera.lookat);
     
@@ -134,7 +142,7 @@ var game = {
     mat4.perspective(p, 45, game.canvas.width/game.canvas.height, 1, 100);
     game.gl.uniformMatrix4fv(game.projectionMatrix, false, p);
 
-    game.keyHandler.tick();
+    game.keyHandler.tick(delta);
     
     game.gl.uniformMatrix4fv(game.viewMatrix, false, game.camera.getLookAt());
     game.gl.clearColor(0, 0, 0, 1);
