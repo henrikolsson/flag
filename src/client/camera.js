@@ -5,13 +5,12 @@ var movespeed = vec3.fromValues(0.003, 0.003, 0.003);
 var mousespeed = 0.003;
 
 var Camera = function () {
-  this.angle = vec3.fromValues(-1, -1, 0);
+  this.angle = vec3.fromValues(0, 0, 0);
   this.forward = vec3.fromValues(0, 0, 0);
   this.lookat = vec3.fromValues(0, 0, 0);
   this.right = vec3.fromValues(0, 0, 0);
   this.up = vec3.fromValues(0.0, 1.0, 0.0);
-  this.position = vec3.fromValues(5,5,0);
-  
+  this.position = vec3.fromValues(Math.random() * 10 - 5, Math.random() * 10 - 5, Math.random() * 10 - 5);
   this.updateVectors();
 };
 

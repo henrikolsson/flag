@@ -7,9 +7,12 @@ var KeyHandler = require('./keyhandler');
 var Program = require('./program');
 var Cube = require('./cube');
 var Stats = require('./stats');
+var log = require('./log');
+var io = require('socket.io-client');
 
 var game = {
   init: function() {
+    log.write("starting...");
     game.camera = new Camera();
     game.keyHandler = new KeyHandler(game);
     game.canvas = document.getElementById("game");
@@ -35,6 +38,26 @@ var game = {
     game.frames = 0;
     game.running = true;
     game.frames = 0;
+    game.socket = io();
+    game.name = "player" + Math.round(Math.random() * 1000);
+    game.players = [];
+    game.socket.on('disconnect', function() {
+      log.write("disconnected");
+    });
+    game.socket.on('connect', function() {
+      log.write("connected as " + game.name);
+      game.socket.emit('hello', {"name": game.name});
+    });
+    game.socket.on('chat', function(msg) {
+      console.log("chat");
+      log.write("<" + msg.player + "> " + msg.message);
+    });
+    game.socket.on('players', function(msg) {
+      if (game.players.length != msg.length) {
+        log.write("other players: " + msg.length);
+      }
+      game.players = msg;
+    });
     game.stats = new Stats(game);
     game.resize();
     
@@ -67,12 +90,12 @@ var game = {
     if (document.pointerLockElement === game.canvas ||
         document.mozPointerLockElement === game.canvas ||
         document.webkitPointerLockElement === game.canvas) {
-      game.running = true;
-      game.keyHandler.reset();
+      //game.running = true;
       document.addEventListener("mousemove", game.mouseMoveCallback, false);
     }
     else {
-      game.running = false;
+      //game.running = false;
+      game.keyHandler.reset();
       document.removeEventListener("mousemove", game.mouseMoveCallback, false);
     }
   },
@@ -121,10 +144,13 @@ var game = {
 
     game.keyHandler.tick(delta);
 
-    for (var i=0;i<100;i++) {
-      game.cube.render(vec3.fromValues(0.0, 0.0, i * 3));
-    }
-
+    game.players.forEach(function(player) {
+      var p = player.position;
+      if (p) {
+        game.cube.render(vec3.fromValues(p[0], p[1], p[2]));
+      }
+    });
+    game.socket.emit("position", game.camera.position);
     game.stats.frameRendered();
     game.frames++;
   },

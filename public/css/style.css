@@ -16,10 +16,8 @@ body, html {
     height: 100%;
 }
 
-.debug {
+.window {
     position: absolute;
-    left: 10px;
-    top: 10px;
     background-color: rgba(204, 204, 204, 0.4);
     color: white;
     font-family: monospace;
@@ -29,3 +27,23 @@ body, html {
     z-index: 10;
     width: 20em;
 }
+
+.debug {
+    left: 10px;
+    top: 10px;
+}
+
+
+.log {
+    bottom: 10px;
+    left: 10px;
+}
+
+.chat {
+    bottom: 20px;
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
+}
+
