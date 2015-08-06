@@ -5,6 +5,8 @@ var Camera = require('./camera');
 var cube = require('./cube');
 var KeyHandler = require('./keyhandler');
 var Program = require('./program');
+var Cube = require('./cube');
+var Stats = require('./stats');
 
 var game = {
   init: function() {
@@ -31,11 +33,9 @@ var game = {
                                  game.canvas.webkitRequestPointerLock);
     
     game.frames = 0;
-    game.fpsNode = utils.getTextNode("#fps");
-    game.positionNode = utils.getTextNode("#position");
-    game.lookAtNode = utils.getTextNode("#lookAt");
     game.running = true;
     game.frames = 0;
+    game.stats = new Stats(game);
     game.resize();
     
     game.program = new Program(game.gl);
@@ -45,25 +45,11 @@ var game = {
       .then(function() {
         game.program.use();
 
-        game.vertexData = game.gl.createBuffer();
-        game.gl.bindBuffer(game.gl.ARRAY_BUFFER, game.vertexData);
-        game.gl.bufferData(game.gl.ARRAY_BUFFER,
-                           new Float32Array(cube.vertices),
-                           game.gl.STATIC_DRAW);
-        
-        game.colorData = game.gl.createBuffer();
-        game.gl.bindBuffer(game.gl.ARRAY_BUFFER, game.colorData);
-        game.gl.bufferData(game.gl.ARRAY_BUFFER,
-                           new Float32Array(cube.colors),
-                           game.gl.STATIC_DRAW);
-        
-        game.vertAttribute = game.program.getAttribLocation("vert");
+        game.cube = new Cube(game.gl, game.program);
+
         game.projectionMatrix = game.program.getUniformLocation("projection");
         game.viewMatrix = game.program.getUniformLocation("view");
         game.modelMatrix = game.program.getUniformLocation("model");
-        game.colorAttribute = game.program.getAttribLocation("color");
-        game.gl.enableVertexAttribArray(game.vertAttribute);
-        game.gl.enableVertexAttribArray(game.colorAttribute);
 
         game.gl.blendFunc(game.gl.SRC_ALPHA, game.gl.ONE_MINUS_SRC_ALPHA);
         game.gl.enable(game.gl.BLEND);
@@ -119,49 +105,27 @@ var game = {
       return;
     }
     var now = performance.now();
-    if (!game.previous) {
-      game.previous = now;
-    }
-    if (now - game.previous > 1000) {
-      var fps = Math.round(game.frames / (now - game.previous) * 1000);
-      game.fpsNode.nodeValue = "" + fps;
-      game.previous = now;
-      game.frames = 0;
-    }
-    
     if (!game.previousFrame) {
       game.previousFrame = now;
     }
     var delta = now - game.previousFrame;
     game.previousFrame = now;
     
-    game.positionNode.nodeValue = utils.vec2str(game.camera.position);
-    game.lookAtNode.nodeValue = utils.vec2str(game.camera.lookat);
-    
     var p = mat4.create();
     mat4.perspective(p, 45, game.canvas.width/game.canvas.height, 1, 100);
     game.gl.uniformMatrix4fv(game.projectionMatrix, false, p);
-
-    game.keyHandler.tick(delta);
-    
     game.gl.uniformMatrix4fv(game.viewMatrix, false, game.camera.getLookAt());
+    
     game.gl.clearColor(0, 0, 0, 1);
     game.gl.clear(game.gl.COLOR_BUFFER_BIT | game.gl.DEPTH_BUFFER_BIT);
-    var m = mat4.create();
-    var player = {position: [0.0,0.0,-1.0]};
-    mat4.translate(m, m, vec3.fromValues(player.position[0], player.position[1], player.position[2]));
-    game.gl.uniformMatrix4fv(game.modelMatrix, false, m);
-    
-    game.gl.bindBuffer(game.gl.ARRAY_BUFFER, game.colorData);
-    game.gl.vertexAttribPointer(game.colorAttribute,
-                                3, game.gl.FLOAT, false, 0, 0);
 
-    game.gl.bindBuffer(game.gl.ARRAY_BUFFER, game.vertexData);
-    game.gl.vertexAttribPointer(game.vertAttribute,
-                                3, game.gl.FLOAT, false, 0, 0);
-    
-    game.gl.drawArrays(game.gl.TRIANGLES, 0, 12*3);
+    game.keyHandler.tick(delta);
 
+    for (var i=0;i<100;i++) {
+      game.cube.render(vec3.fromValues(0.0, 0.0, i * 3));
+    }
+
+    game.stats.frameRendered();
     game.frames++;
   },
 
