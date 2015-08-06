@@ -7,9 +7,10 @@ function Stats(game) {
   this.positionNode = utils.getTextNode("#position");
   this.lookAtNode = utils.getTextNode("#lookAt");
   this.pendingChunksNode = utils.getTextNode("#pendingChunks");
+  this.chunksRenderedNode = utils.getTextNode("#chunksRendered");
 }
 
-Stats.prototype.frameRendered = function() {
+Stats.prototype.frameRendered = function(chunksRendered) {
   this.frames++;
   var now = performance.now();
   if (!this.previous) {
@@ -25,6 +26,7 @@ Stats.prototype.frameRendered = function() {
   this.positionNode.nodeValue = utils.vec2str(this.game.camera.position);
   this.lookAtNode.nodeValue = utils.vec2str(this.game.camera.lookat);
   this.pendingChunksNode.nodeValue = this.game.client.numberOfPendingChunks();
+  this.chunksRenderedNode.nodeValue = chunksRendered;
 };
 
 module.exports = Stats;

@@ -2,6 +2,32 @@ var vec3 = require('gl-matrix').vec3;
 var mat4 = require('gl-matrix').mat4;
 var config = require('../common/config');
 
+var numBuffers = 10;
+var buffers = [];
+console.log("hiya");
+
+for (var i=0;i<numBuffers;i++) {
+  buffers.push({"buffer": new ArrayBuffer(4 * config.CHUNK_SIZE_X * config.CHUNK_SIZE_Y * config.CHUNK_SIZE_Z * 6 * 6),
+                "used": false,
+                "index": i});
+}
+
+
+function getBuffer() {
+  for (var i=0;i<numBuffers;i++) {
+    if (!buffers[i].used) {
+      buffers[i].used = true;
+      return buffers[i];
+    }
+  }
+  console.log("warning - no free buffer");
+  return new ArrayBuffer(4 * config.CHUNK_SIZE_X * config.CHUNK_SIZE_Y * config.CHUNK_SIZE_Z * 6 * 6);
+}
+
+function returnBuffer(b) {
+  buffers[b.index].used = false;
+}
+
 function getBlock(chunk, x, y, z) {
   if (x >= config.CHUNK_SIZE_X ||
       y >= config.CHUNK_SIZE_Y ||
@@ -21,10 +47,7 @@ function getBlock(chunk, x, y, z) {
 
 function isAir(data,x,y,z) {
   var result = getBlock(data,x,y,z);
-  if (isNaN(result)) {
-    //alert("NOPE");
-  }
-  return result === 0 || isNaN(result);
+  return result === 0;
 }
 
 function isTransparent(data,x,y,z) {
@@ -42,9 +65,11 @@ function Chunk(c, gl, program) {
   if (this.data.length === 0) {
     return;
   }
-  this.verticesBuffer = new ArrayBuffer(4 * config.CHUNK_SIZE_X * config.CHUNK_SIZE_Y * config.CHUNK_SIZE_Z * 6 * 6);
-  this.vertices = new Int32Array(this.verticesBuffer);
-  this.verticesBytes = new Int8Array(this.verticesBuffer);
+
+  var bufferObj = getBuffer();
+  var verticesBuffer = bufferObj.buffer;
+  var vertices = new Int32Array(verticesBuffer);
+  var verticesBytes = new Int8Array(verticesBuffer);
 
   var i = 0;
   var data = this.data;
@@ -72,102 +97,105 @@ function Chunk(c, gl, program) {
         if ((isAir(data,x,y,z-1) || (isTransparent(data,x,y,z-1) && !isTransparent(data,x,y,z))))
         {
           // front
-          this.vertices[i++] = v0v;
-          this.vertices[i++] = v1v;
-          this.vertices[i++] = v3v;
+          vertices[i++] = v0v;
+          vertices[i++] = v1v;
+          vertices[i++] = v3v;
 
-          this.vertices[i++] = v0v;
-          this.vertices[i++] = v3v;
-          this.vertices[i++] = v2v;
+          vertices[i++] = v0v;
+          vertices[i++] = v3v;
+          vertices[i++] = v2v;
         }
         
         if ((isAir(data,x,y,z+1) || (isTransparent(data,x,y,z+1) && !isTransparent(data,x,y,z))))
         {
           // back
-          this.vertices[i++] = v5v;
-          this.vertices[i++] = v4v;
-          this.vertices[i++] = v6v;
+          vertices[i++] = v5v;
+          vertices[i++] = v4v;
+          vertices[i++] = v6v;
           
 
-          this.vertices[i++] = v5v;
-          this.vertices[i++] = v6v;
-          this.vertices[i++] = v7v;
+          vertices[i++] = v5v;
+          vertices[i++] = v6v;
+          vertices[i++] = v7v;
           
         }
         
         if ((isAir(data,x,y-1,z) || (isTransparent(data,x,y-1,z) && !isTransparent(data,x,y,z))))
         {
           //bottom
-          this.vertices[i++] = (block << 24) | ((z+1) << 16) | ((y+0) << 8) | (x+0);
-          this.vertices[i++] = (block << 24) | ((z+1) << 16) | ((y+0) << 8) | (x+1);
-          this.vertices[i++] = (block << 24) | ((z+0) << 16) | ((y+0) << 8) | (x+1);
+          vertices[i++] = (block << 24) | ((z+1) << 16) | ((y+0) << 8) | (x+0);
+          vertices[i++] = (block << 24) | ((z+1) << 16) | ((y+0) << 8) | (x+1);
+          vertices[i++] = (block << 24) | ((z+0) << 16) | ((y+0) << 8) | (x+1);
           
-          this.vertices[i++] = (block << 24) | ((z+1) << 16) | ((y+0) << 8) | (x+0);
-          this.vertices[i++] = (block << 24) | ((z+0) << 16) | ((y+0) << 8) | (x+1);
-          this.vertices[i++] = (block << 24) | ((z+0) << 16) | ((y+0) << 8) | (x+0);
+          vertices[i++] = (block << 24) | ((z+1) << 16) | ((y+0) << 8) | (x+0);
+          vertices[i++] = (block << 24) | ((z+0) << 16) | ((y+0) << 8) | (x+1);
+          vertices[i++] = (block << 24) | ((z+0) << 16) | ((y+0) << 8) | (x+0);
         }
         
         if ((isAir(data,x,y+1,z)))
         {
           //top
-          this.vertices[i++] = (block << 24) | ((z+0) << 16) | ((y+1) << 8) | (x+0);
-          this.vertices[i++] = (block << 24) | ((z+0) << 16) | ((y+1) << 8) | (x+1);
-          this.vertices[i++] = (block << 24) | ((z+1) << 16) | ((y+1) << 8) | (x+1);
+          vertices[i++] = (block << 24) | ((z+0) << 16) | ((y+1) << 8) | (x+0);
+          vertices[i++] = (block << 24) | ((z+0) << 16) | ((y+1) << 8) | (x+1);
+          vertices[i++] = (block << 24) | ((z+1) << 16) | ((y+1) << 8) | (x+1);
 
-          this.vertices[i++] = (block << 24) | ((z+0) << 16) | ((y+1) << 8) | (x+0);
-          this.vertices[i++] = (block << 24) | ((z+1) << 16) | ((y+1) << 8) | (x+1);
-          this.vertices[i++] = (block << 24) | ((z+1) << 16) | ((y+1) << 8) | (x+0);        
+          vertices[i++] = (block << 24) | ((z+0) << 16) | ((y+1) << 8) | (x+0);
+          vertices[i++] = (block << 24) | ((z+1) << 16) | ((y+1) << 8) | (x+1);
+          vertices[i++] = (block << 24) | ((z+1) << 16) | ((y+1) << 8) | (x+0);        
         }
 
         if ((isAir(data,x-1,y,z)))
         {
           // side left
-          this.vertices[i++] = v4v;
-          this.vertices[i++] = v0v;
-          this.vertices[i++] = v2v;
+          vertices[i++] = v4v;
+          vertices[i++] = v0v;
+          vertices[i++] = v2v;
 
-          this.vertices[i++] = v4v;
-          this.vertices[i++] = v2v;
-          this.vertices[i++] = v6v;
+          vertices[i++] = v4v;
+          vertices[i++] = v2v;
+          vertices[i++] = v6v;
         }
         
         if ((isAir(data,x+1,y,z)))
         {
           // side right
-          this.vertices[i++] = v1v;
-          this.vertices[i++] = v5v;
-          this.vertices[i++] = v7v;
+          vertices[i++] = v1v;
+          vertices[i++] = v5v;
+          vertices[i++] = v7v;
 
-          this.vertices[i++] = v1v;
-          this.vertices[i++] = v7v;
-          this.vertices[i++] = v3v;
+          vertices[i++] = v1v;
+          vertices[i++] = v7v;
+          vertices[i++] = v3v;
         }
       }
     }
   }
-  console.log("chunk elements: " + i);
-  if (i === 0) {
-    return;
+  returnBuffer(bufferObj);
+  var meshTime = performance.now() - start;
+  start = performance.now();
+  if (i > 0) {
+    this.elements = i;
+  
+    program.use();  
+    
+    this.vertAttribute = program.getAttribLocation("vert");
+    this.modelMatrix = program.getUniformLocation("model");
+    
+    this.buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, verticesBytes, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(this.vertAttribute);
+    gl.vertexAttribPointer(this.vertAttribute, 4, gl.BYTE, false, 0, 0);
   }
-  this.elements = i;
-  
-  program.use();  
-
-  this.vertAttribute = program.getAttribLocation("vert");
-  this.modelMatrix = program.getUniformLocation("model");
-  
-  this.buffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
-  gl.bufferData(gl.ARRAY_BUFFER, this.verticesBytes, gl.STATIC_DRAW);
-  gl.enableVertexAttribArray(this.vertAttribute);
-  gl.vertexAttribPointer(this.vertAttribute, 4, gl.BYTE, false, 0, 0);
-  var duration = performance.now() - start;
-  console.log("time: " + duration);
+  var uploadTime = performance.now() - start;
+  if (uploadTime + meshTime > 8) {
+    console.log("mesh: " + meshTime + " upload: " + uploadTime);
+  }
 }
 
 Chunk.prototype.render = function() {
   if (!this.buffer) {
-    return;
+    return false;
   }
   var m = mat4.create();
   mat4.translate(m, m, vec3.fromValues(this.cx * config.CHUNK_SIZE_X,
@@ -179,6 +207,7 @@ Chunk.prototype.render = function() {
   this.gl.vertexAttribPointer(this.vertAttribute, 4, this.gl.BYTE, false, 0, 0);
   
   this.gl.drawArrays(this.gl.TRIANGLES, 0, this.elements);
+  return true;
 };
 
 module.exports = Chunk;

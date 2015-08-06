@@ -70,31 +70,34 @@ io.on('connection', function(socket) {
   });
 
   socket.on("getChunk", function(msg) {
-    var buffer = new ArrayBuffer(config.CHUNK_SIZE_X * config.CHUNK_SIZE_Y * config.CHUNK_SIZE_Z);
-    var chunk = new Int8Array(buffer);
-    for (var x=0;x<config.CHUNK_SIZE_X;x++) {
-      var ax = msg.cx * config.CHUNK_SIZE_X + x;
-      for (var z=0;z<config.CHUNK_SIZE_Z;z++) {
-        var az = msg.cz * config.CHUNK_SIZE_Z + z;
-        var n = noise2d(ax,az) * 4;
-        var h = n * 2 + 10;
-        for (var y=0;y<config.CHUNK_SIZE_Y;y++) {
-          var ay = msg.cy * config.CHUNK_SIZE_Y + y;
-          if (ay < h) {
-            var r = noise3d(ax / 16.0,
-                            ay / 16.0,
-                            az / 16.0);
-            var type = 1;
-            //console.log(n + r * 5, r);
-            if(n + r * 5 < 4)
-              type = 7;
-            else if(n + r * 5 < 8)
-              type = 3;
-            else if(r < 1.25)
-              type = 6;
-            setBlock(chunk, x, y, z, type);
-          } else {
-            setBlock(chunk, x, y, z, 0);
+    var buffer = new ArrayBuffer(0);
+    if (msg.cy >= 0) {
+      buffer = new ArrayBuffer(config.CHUNK_SIZE_X * config.CHUNK_SIZE_Y * config.CHUNK_SIZE_Z);
+      var chunk = new Int8Array(buffer);
+      for (var x=0;x<config.CHUNK_SIZE_X;x++) {
+        var ax = msg.cx * config.CHUNK_SIZE_X + x;
+        for (var z=0;z<config.CHUNK_SIZE_Z;z++) {
+          var az = msg.cz * config.CHUNK_SIZE_Z + z;
+          var n = noise2d(ax,az) * 4;
+          var h = n * 2 + 10;
+          for (var y=0;y<config.CHUNK_SIZE_Y;y++) {
+            var ay = msg.cy * config.CHUNK_SIZE_Y + y;
+            if (ay < h) {
+              var r = noise3d(ax / 16.0,
+                              ay / 16.0,
+                              az / 16.0);
+              var type = 1;
+              //console.log(n + r * 5, r);
+              if(n + r * 5 < 4)
+                type = 7;
+              else if(n + r * 5 < 8)
+                type = 3;
+              else if(r < 1.25)
+                type = 6;
+              setBlock(chunk, x, y, z, type);
+            } else {
+              setBlock(chunk, x, y, z, 0);
+            }
           }
         }
       }

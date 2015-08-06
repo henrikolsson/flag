@@ -61,6 +61,8 @@ var game = {
         game.gl.enable(game.gl.BLEND);
         
         game.gl.disable(game.gl.CULL_FACE);
+        //game.gl.enable(game.gl.CULL_FACE);
+        //game.gl.cullFace(game.gl.BACK);
         game.gl.enable(game.gl.DEPTH_TEST);        
         window.requestAnimationFrame(game.animate);
       })
@@ -98,12 +100,12 @@ var game = {
 
   animate: function() {
     var handle = window.requestAnimationFrame(game.animate);
-    try {
+    //try {
       game.render();
-    } catch(err) {
-      window.cancelAnimationFrame(handle);
-      utils.fatal(err);
-    }
+    //} catch(err) {
+    //window.cancelAnimationFrame(handle);
+    //utils.fatal(err);
+    //}
   },
 
   render: function() {
@@ -118,7 +120,7 @@ var game = {
     game.previousFrame = now;
     
     var p = mat4.create();
-    mat4.perspective(p, 45, game.canvas.width/game.canvas.height, 1, 100);
+    mat4.perspective(p, 45, game.canvas.width/game.canvas.height, 1, 10000);
     game.gl.uniformMatrix4fv(game.projectionMatrix, false, p);
     game.gl.uniformMatrix4fv(game.viewMatrix, false, game.camera.getLookAt());
     
@@ -127,9 +129,10 @@ var game = {
 
     game.keyHandler.tick(delta);
 
-    var sx = Math.floor(game.camera.position[0] / 16);
-    var sy = Math.floor(game.camera.position[1] / 16);
-    var sz = Math.floor(game.camera.position[2] / 16);
+    var chunksRendered = 0;
+    var sx = Math.floor(game.camera.position[0] / config.CHUNK_SIZE_X);
+    var sy = Math.floor(game.camera.position[1] / config.CHUNK_SIZE_Y);
+    var sz = Math.floor(game.camera.position[2] / config.CHUNK_SIZE_Z);
     for (var x=-config.VIEWPORT_CHUNKS_X/2;x<config.VIEWPORT_CHUNKS_X/2+1;x++) {
       for (var y=-config.VIEWPORT_CHUNKS_Y/2;y<config.VIEWPORT_CHUNKS_Y/2+1;y++) {
         for (var z=-config.VIEWPORT_CHUNKS_Z/2;z<config.VIEWPORT_CHUNKS_Z/2+1;z++) {
@@ -138,7 +141,14 @@ var game = {
           var cz = Math.floor(sz - (z * -1));
           var chunk = world.getChunk(cx, cy, cz, true);
           if (chunk) {
-            chunk.render();
+            if ((cx >= sx && game.camera.forward[0] >= 0) ||
+                (cx <= sx && game.camera.forward[0] <= 0) ||
+                (cz >= sz && game.camera.forward[2] >= 0) ||
+                (cz <= sz && game.camera.forward[2] <= 0)) {
+              if (chunk.render()) {
+                chunksRendered++;
+              }
+            }
           } else {
             game.client.getChunk(cx, cy, cz);            
           }
@@ -153,13 +163,8 @@ var game = {
       }
     });
 
-    if (require('./world').chunks) {
-      require('./world').chunks.forEach(function(c) {
-        c.render();
-      });
-    }
     game.client.position(game.camera.position);
-    game.stats.frameRendered();
+    game.stats.frameRendered(chunksRendered);
     game.frames++;
   },
 

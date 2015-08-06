@@ -3,13 +3,17 @@ var log = require('./log');
 var config = require('../common/config');
 var world = require('./world');
 
+function key(cx, cy, cz) {
+  return cx+","+cy+","+cz;
+}
+
 function Client(name) {
   var self = this;
   var socket = io();
   this.socket = socket;
   this.players = [];
   this.name = name;
-  this.pendingChunks = [];
+  this.pendingChunks = {};
   
   socket.on('disconnect', function() {
     log.write("disconnected");
@@ -26,14 +30,7 @@ function Client(name) {
 
   socket.on("chunk", function(msg) {
     try {
-      for (var i=0;i<self.pendingChunks.length;i++) {
-        if (self.pendingChunks[i].cx == msg.cx &&
-            self.pendingChunks[i].cy == msg.cy &&
-            self.pendingChunks[i].cz == msg.cz) {
-          self.pendingChunks.splice(i, 1);
-          break;
-        }
-      }    
+      delete self.pendingChunks[key(msg.cx, msg.cy, msg.cz)];
       world.addChunk(msg);
     }
     catch (e) {
@@ -61,24 +58,18 @@ Client.prototype.getChunk = function(cx, cy, cz) {
   cx = Math.trunc(cx);
   cy = Math.trunc(cy);
   cz = Math.trunc(cz);
-  
-  for (var i=0;i<this.pendingChunks.length;i++) {
-    if (this.pendingChunks[i].cx == cx &&
-        this.pendingChunks[i].cy == cy &&
-        this.pendingChunks[i].cz == cz) {
-      return;
-    }
+
+  if (this.pendingChunks[key(cx,cy,cz)]) {
+    return;
   }
   this.socket.emit("getChunk", {"cx": cx,
                                 "cy": cy,
                                 "cz": cz});
-  this.pendingChunks.push({"cx": cx,
-                           "cy": cy,
-                           "cz": cz});
+  this.pendingChunks[key(cx, cy, cz)] = true;
 };
 
 Client.prototype.numberOfPendingChunks = function() {
-  return this.pendingChunks.length;
+  return Object.keys(this.pendingChunks).length;
 };
 
 module.exports = Client;
