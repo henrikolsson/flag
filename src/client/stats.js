@@ -6,6 +6,7 @@ function Stats(game) {
   this.fpsNode = utils.getTextNode("#fps");
   this.positionNode = utils.getTextNode("#position");
   this.lookAtNode = utils.getTextNode("#lookAt");
+  this.pendingChunksNode = utils.getTextNode("#pendingChunks");
 }
 
 Stats.prototype.frameRendered = function() {
@@ -23,6 +24,7 @@ Stats.prototype.frameRendered = function() {
   
   this.positionNode.nodeValue = utils.vec2str(this.game.camera.position);
   this.lookAtNode.nodeValue = utils.vec2str(this.game.camera.lookat);
+  this.pendingChunksNode.nodeValue = this.game.client.numberOfPendingChunks();
 };
 
 module.exports = Stats;

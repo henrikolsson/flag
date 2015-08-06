@@ -9,6 +9,8 @@ var Cube = require('./cube');
 var Stats = require('./stats');
 var log = require('./log');
 var Client = require('./client');
+var world = require('./world');
+var config = require('../common/config');
 
 var game = {
   init: function() {
@@ -49,7 +51,6 @@ var game = {
     game.program.link()
       .then(function() {
         game.program.use();
-
         game.cube = new Cube(game.gl, game.program);
 
         game.projectionMatrix = game.program.getUniformLocation("projection");
@@ -126,12 +127,37 @@ var game = {
 
     game.keyHandler.tick(delta);
 
+    var sx = Math.floor(game.camera.position[0] / 16);
+    var sy = Math.floor(game.camera.position[1] / 16);
+    var sz = Math.floor(game.camera.position[2] / 16);
+    for (var x=-config.VIEWPORT_CHUNKS_X/2;x<config.VIEWPORT_CHUNKS_X/2+1;x++) {
+      for (var y=-config.VIEWPORT_CHUNKS_Y/2;y<config.VIEWPORT_CHUNKS_Y/2+1;y++) {
+        for (var z=-config.VIEWPORT_CHUNKS_Z/2;z<config.VIEWPORT_CHUNKS_Z/2+1;z++) {
+          var cx = Math.floor(sx - (x * -1));
+          var cy = Math.floor(sy - (y * -1));
+          var cz = Math.floor(sz - (z * -1));
+          var chunk = world.getChunk(cx, cy, cz, true);
+          if (chunk) {
+            chunk.render();
+          } else {
+            game.client.getChunk(cx, cy, cz);            
+          }
+        }
+      }
+    }
+
     game.client.players.forEach(function(player) {
       var p = player.position;
       if (p) {
         game.cube.render(vec3.fromValues(p[0], p[1], p[2]));
       }
     });
+
+    if (require('./world').chunks) {
+      require('./world').chunks.forEach(function(c) {
+        c.render();
+      });
+    }
     game.client.position(game.camera.position);
     game.stats.frameRendered();
     game.frames++;

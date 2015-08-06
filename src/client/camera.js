@@ -1,7 +1,7 @@
 var vec3 = require('gl-matrix').vec3;
 var mat4 = require('gl-matrix').mat4;
 
-var movespeed = vec3.fromValues(0.003, 0.003, 0.003);
+var movespeed = vec3.fromValues(0.01, 0.01, 0.01);
 var mousespeed = 0.003;
 
 var Camera = function () {
@@ -10,7 +10,7 @@ var Camera = function () {
   this.lookat = vec3.fromValues(0, 0, 0);
   this.right = vec3.fromValues(0, 0, 0);
   this.up = vec3.fromValues(0.0, 1.0, 0.0);
-  this.position = vec3.fromValues(Math.random() * 10 - 5, Math.random() * 10 - 5, Math.random() * 10 - 5);
+  this.position = vec3.fromValues(Math.random() * 20 - 10, Math.random() * 20 + 20, Math.random() * 20 - 10);
   this.updateVectors();
 };
 

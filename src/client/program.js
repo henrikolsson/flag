@@ -27,7 +27,7 @@ Program.prototype.link = function() {
         });
         gl.linkProgram(self.program);
         if (!gl.getProgramParameter(self.program, gl.LINK_STATUS)) {
-          reject("Failed to link program: " + gl.getProgramInfoLog(program));
+          reject("Failed to link program: " + gl.getProgramInfoLog(self.program));
         } else {
           resolve();
         }
