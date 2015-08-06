@@ -8,12 +8,14 @@ var Program = require('./program');
 var Cube = require('./cube');
 var Stats = require('./stats');
 var log = require('./log');
-var io = require('socket.io-client');
+var Client = require('./client');
 
 var game = {
   init: function() {
     log.write("starting...");
+    window.game = game;
     game.camera = new Camera();
+    game.client = new Client("player" + Math.round(Math.random() * 1000));
     game.keyHandler = new KeyHandler(game);
     game.canvas = document.getElementById("game");
     game.gl = game.canvas.getContext("webgl");
@@ -38,26 +40,6 @@ var game = {
     game.frames = 0;
     game.running = true;
     game.frames = 0;
-    game.socket = io();
-    game.name = "player" + Math.round(Math.random() * 1000);
-    game.players = [];
-    game.socket.on('disconnect', function() {
-      log.write("disconnected");
-    });
-    game.socket.on('connect', function() {
-      log.write("connected as " + game.name);
-      game.socket.emit('hello', {"name": game.name});
-    });
-    game.socket.on('chat', function(msg) {
-      console.log("chat");
-      log.write("<" + msg.player + "> " + msg.message);
-    });
-    game.socket.on('players', function(msg) {
-      if (game.players.length != msg.length) {
-        log.write("other players: " + msg.length);
-      }
-      game.players = msg;
-    });
     game.stats = new Stats(game);
     game.resize();
     
@@ -144,13 +126,13 @@ var game = {
 
     game.keyHandler.tick(delta);
 
-    game.players.forEach(function(player) {
+    game.client.players.forEach(function(player) {
       var p = player.position;
       if (p) {
         game.cube.render(vec3.fromValues(p[0], p[1], p[2]));
       }
     });
-    game.socket.emit("position", game.camera.position);
+    game.client.position(game.camera.position);
     game.stats.frameRendered();
     game.frames++;
   },

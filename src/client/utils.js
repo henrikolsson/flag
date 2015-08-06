@@ -36,7 +36,7 @@ exports.loadShader = function(gl, name, type) {
 
 exports.getTextNode = function(selector) {
   var container = document.querySelector(selector);
-  var child = document.createTextNode("?");
+  var child = document.createTextNode("");
   container.appendChild(child);
   return child;
 };

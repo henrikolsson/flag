@@ -1,23 +1,4 @@
-function isChatDisplayed() {
-  var el = document.querySelector(".chat");
-  console.log(el.style.display);
-  return el.style.display != 'none';
-}
-
-function toggleChat(game) {
-  var el = document.querySelector(".chat");
-  var isDisplayed = isChatDisplayed();
-  if (!isDisplayed) {
-    el.style.display = 'block';
-    el.focus();
-  } else {
-    if (el.value && el.value.length > 0) {
-      game.socket.emit("chat", {"message": el.value});
-      el.value = "";
-    }
-    el.style.display = 'none';
-  }
-}
+var Chat = require('./chat');
 
 var KeyHandler = function(game) {
   this.game = game;
@@ -31,21 +12,25 @@ var KeyHandler = function(game) {
     "e": game.camera.goDown.bind(game.camera)
   };
   this.downHandlers = {
-    13: toggleChat
+    13: new Chat(game.client)
   };
+  this.currentHandler = null;
   document.body.addEventListener("keydown", this.keydown.bind(this));
   document.body.addEventListener("keyup", this.keyup.bind(this));
 };
 
 KeyHandler.prototype.keydown = function(e) {
-  console.log(e.keyCode);
-  if (!isChatDisplayed()) {
+  if (!this.currentHandler) {
     this.keys[e.keyCode] = true;
   }
   for (var k in this.downHandlers) {
     if (this.downHandlers.hasOwnProperty(k)) {
       if (k == e.keyCode) {
-        this.downHandlers[k](this.game);
+        if (this.downHandlers[k].toggle()) {
+          this.currentHandler = this.downHandlers[k];
+        } else {
+          this.currentHandler = null;
+        }
       }
     }
   }
@@ -57,10 +42,8 @@ KeyHandler.prototype.keyup = function(e) {
 
 KeyHandler.prototype.reset = function() {
   var el = document.querySelector(".chat");
-  var isDisplayed = isChatDisplayed();
-  if (isDisplayed) {
-    el.value = "";
-    el.style.display = 'none';
+  if (this.currentHandler) {
+    this.currentHandler.dismiss();
   }
   for (var k in this.keys) {
     if (this.keys.hasOwnProperty(k)) {
