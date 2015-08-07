@@ -71,6 +71,7 @@ io.on('connection', function(socket) {
 
   socket.on("getChunk", function(msg) {
     var buffer = new ArrayBuffer(0);
+    var hasChanged = false;
     if (msg.cy >= 0) {
       buffer = new ArrayBuffer(config.CHUNK_SIZE_X * config.CHUNK_SIZE_Y * config.CHUNK_SIZE_Z);
       var chunk = new Int8Array(buffer);
@@ -94,6 +95,7 @@ io.on('connection', function(socket) {
                 type = 3;
               else if(r < 1.25)
                 type = 6;
+              hasChanged = true;
               setBlock(chunk, x, y, z, type);
             } else {
               setBlock(chunk, x, y, z, 0);
@@ -101,6 +103,9 @@ io.on('connection', function(socket) {
           }
         }
       }
+    }
+    if (!hasChanged) {
+      buffer = new ArrayBuffer(0);
     }
     socket.emit("chunk", {"cx": msg.cx,
                           "cy": msg.cy,
@@ -131,6 +136,6 @@ io.on('connection', function(socket) {
   });
 });
 
-http.listen(3000, function(){
-  console.log('listening on *:3000');
+http.listen(3001, function(){
+  console.log('listening on *:3001');
 });

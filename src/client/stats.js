@@ -5,12 +5,14 @@ function Stats(game) {
   this.game = game;
   this.fpsNode = utils.getTextNode("#fps");
   this.positionNode = utils.getTextNode("#position");
+  this.chunkNode = utils.getTextNode("#chunk");
   this.lookAtNode = utils.getTextNode("#lookAt");
   this.pendingChunksNode = utils.getTextNode("#pendingChunks");
   this.chunksRenderedNode = utils.getTextNode("#chunksRendered");
+  this.verticesRenderedNode = utils.getTextNode("#verticesRendered");
 }
 
-Stats.prototype.frameRendered = function(chunksRendered) {
+Stats.prototype.frameRendered = function(chunksRendered, verticesRendered, chunk) {
   this.frames++;
   var now = performance.now();
   if (!this.previous) {
@@ -23,10 +25,12 @@ Stats.prototype.frameRendered = function(chunksRendered) {
     this.frames = 0;
   }
   
+  this.chunkNode.nodeValue = utils.vec2str(chunk);
   this.positionNode.nodeValue = utils.vec2str(this.game.camera.position);
   this.lookAtNode.nodeValue = utils.vec2str(this.game.camera.lookat);
   this.pendingChunksNode.nodeValue = this.game.client.numberOfPendingChunks();
   this.chunksRenderedNode.nodeValue = chunksRendered;
+  this.verticesRenderedNode.nodeValue = verticesRendered;
 };
 
 module.exports = Stats;

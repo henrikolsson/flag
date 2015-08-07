@@ -16,6 +16,7 @@ var game = {
   init: function() {
     log.write("starting...");
     window.game = game;
+    game.world = world;
     game.camera = new Camera();
     game.client = new Client("player" + Math.round(Math.random() * 1000));
     game.keyHandler = new KeyHandler(game);
@@ -129,10 +130,12 @@ var game = {
 
     game.keyHandler.tick(delta);
 
+    var verticesRendered = 0;
     var chunksRendered = 0;
     var sx = Math.floor(game.camera.position[0] / config.CHUNK_SIZE_X);
     var sy = Math.floor(game.camera.position[1] / config.CHUNK_SIZE_Y);
     var sz = Math.floor(game.camera.position[2] / config.CHUNK_SIZE_Z);
+    
     for (var x=-config.VIEWPORT_CHUNKS_X/2;x<config.VIEWPORT_CHUNKS_X/2+1;x++) {
       for (var y=-config.VIEWPORT_CHUNKS_Y/2;y<config.VIEWPORT_CHUNKS_Y/2+1;y++) {
         for (var z=-config.VIEWPORT_CHUNKS_Z/2;z<config.VIEWPORT_CHUNKS_Z/2+1;z++) {
@@ -145,8 +148,10 @@ var game = {
                 (cx <= sx && game.camera.forward[0] <= 0) ||
                 (cz >= sz && game.camera.forward[2] >= 0) ||
                 (cz <= sz && game.camera.forward[2] <= 0)) {
-              if (chunk.render()) {
+              var vertices = chunk.render();
+              if (vertices > 0) {
                 chunksRendered++;
+                verticesRendered = verticesRendered + vertices;
               }
             }
           } else {
@@ -155,6 +160,16 @@ var game = {
         }
       }
     }
+    // var c = [[2,0,3], [2,1,3]];
+    // c.forEach(function(c) {
+    //   var chunk = world.getChunk(c[0], c[1], c[2]);
+    //   if (chunk) {
+    //     chunk.render();
+    //   } else {
+    //     game.client.getChunk(c[0], c[1], c[2]);
+    //   }
+    // });
+    
 
     game.client.players.forEach(function(player) {
       var p = player.position;
@@ -164,7 +179,7 @@ var game = {
     });
 
     game.client.position(game.camera.position);
-    game.stats.frameRendered(chunksRendered);
+    game.stats.frameRendered(chunksRendered, verticesRendered, [sx, sy, sz]);
     game.frames++;
   },
 
